@@ -4,11 +4,7 @@ const nextConfig: NextConfig = {
   devIndicators: false, // Remove widget de desenvolvimento Next.js
   
   // Ignorar erros durante build (compatibilidade Vercel)
-  const config: NextConfig = {
-    typescript: {
-      ignoreBuildErrors: true,
-    },
-  };
+ 
   
   // Configuração de imagens para principais provedores
   images: {
