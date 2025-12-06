@@ -1,0 +1,6 @@
+{
+  "/api/validar-acesso/route": "app/api/validar-acesso/route.js",
+  "/icon.svg/route": "app/icon.svg/route.js",
+  "/page": "app/page.js",
+  "/produto/page": "app/produto/page.js"
+}
