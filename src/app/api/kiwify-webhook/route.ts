@@ -99,6 +99,7 @@ export async function POST(request: NextRequest) {
         payment_method: body.payment_method || "",
         subscription_id: body.Subscription?.id || "",
         subscription_status: body.Subscription?.status || "",
+        status: body.order_status || "paid",  // ← ADICIONA ISSO!
         aprovado: true,
         combo_gerado: false,
       };
