@@ -86,7 +86,6 @@ export async function POST(request: NextRequest) {
     if (status === "paid" || status === "approved" || status === "compra_aprovada") {
       // Monta os dados completos do cliente
       const customerData = {
-        email: email,
         order_id: body.order_id,
         customer_email: email,
         customer_name: body.Customer?.full_name || body.customer_name || "",
