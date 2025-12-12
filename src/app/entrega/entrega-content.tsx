@@ -62,7 +62,9 @@ export default function EntregaContent() {
         }
 
         const data: ComboResponse = await response.json();
-
+        console.log('✅ Response recebida:', data);
+        console.log('📄 HTML recebido?', !!data.html);
+        console.log('✅ Success?', data.success);
         if (data.success) {
           setComboHtml(data.html);
           if (data.analises) {
