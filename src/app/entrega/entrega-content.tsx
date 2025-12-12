@@ -65,13 +65,25 @@ export default function EntregaContent() {
         console.log('✅ Response recebida:', data);
         console.log('📄 HTML recebido?', !!data.html);
         console.log('✅ Success?', data.success);
-        if (data.success) {
+        if (data.success && data.html) {
+          console.log('🎉 HTML recebido! Tamanho:', data.html.length);
           setComboHtml(data.html);
+          
           if (data.analises) {
             setClientData(prev => ({
               ...prev!,
               signoZodiacal: data.analises?.signoZodiacal,
             }));
+          }
+          
+          setLoading(false);
+          return;
+        } else {
+          console.log('❌ Erro: HTML vazio ou success false');
+          setError('Erro ao gerar combo');
+          setLoading(false);
+        }
+}
           }
 
           const downloadKey = `combo_downloaded_${email}`;
