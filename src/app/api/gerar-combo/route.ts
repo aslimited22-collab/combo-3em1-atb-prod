@@ -74,6 +74,33 @@ function obterSignoZodiacal(dia: number, mes: number): string {
   return 'Desconhecido';
 }
 
+// Gera números para loteria usando numerologia Kaballah
+function gerarNumerosLoteria(nome: string, data: string): number[] {
+  const [ano, mes, dia] = data.split('-').map(Number);
+  
+  // Seed baseado no nome e data
+  let seed = 0;
+  for (let i = 0; i < nome.length; i++) {
+    seed += nome.charCodeAt(i);
+  }
+  seed += dia + mes + ano;
+  
+  // Função pseudo-aleatória com seed
+  const random = (min: number, max: number) => {
+    seed = (seed * 9301 + 49297) % 233280;
+    return Math.floor((seed / 233280) * (max - min + 1)) + min;
+  };
+  
+  const numeros = new Set<number>();
+  
+  // Gera 5 números entre 1 e 60 (padrão de numerologia Kaballah)
+  while (numeros.size < 5) {
+    numeros.add(random(1, 60));
+  }
+  
+  return Array.from(numeros).sort((a, b) => a - b);
+}
+
 async function chamarChatGPT(prompt: string): Promise<string> {
   const response = await fetch('https://api.openai.com/v1/chat/completions', {
     method: 'POST',
@@ -97,6 +124,20 @@ async function chamarChatGPT(prompt: string): Promise<string> {
 
   const data = await response.json();
   return data.choices[0].message.content;
+}
+
+// Remove assinaturas do ChatGPT
+function limparTexto(texto: string): string {
+  // Remove padrões comuns de assinatura
+  return texto
+    .replace(/\[.*?Especialista.*?\]/g, '')
+    .replace(/\[.*?Mestre.*?\]/g, '')
+    .replace(/\[.*?Tarólogo.*?\]/g, '')
+    .replace(/\[.*?Astrólogo.*?\]/g, '')
+    .replace(/\[.*?Curador.*?\]/g, '')
+    .replace(/Atenciosamente,?.*$/gm, '')
+    .replace(/Com bênçãos,?.*$/gm, '')
+    .trim();
 }
 
 export async function POST(request: NextRequest) {
@@ -137,6 +178,7 @@ export async function POST(request: NextRequest) {
     const idade = calcularIdade(data);
     const { dia, mes, ano, nomeNumeros } = extrairNumeros(data, nome);
     const signoZodiacal = obterSignoZodiacal(dia, mes);
+    const numerosLoteria = gerarNumerosLoteria(nome, data);
 
     const numeroDestino = reduzirNumero(dia + mes + ano);
     const numeroExpressao = reduzirNumero(nomeNumeros.reduce((a, b) => a + b, 0));
@@ -169,9 +211,10 @@ Crie uma análise esotérica incluindo:
 - Ciclos pessoais
 - Mensagem do Universo através dos números
 
-Seja poético, inspirador e misterioso. Responda em português brasileiro.`;
+Seja poético, inspirador e misterioso. Responda em português brasileiro. NÃO adicione assinatura ou crédito ao final.`;
 
-    const numerologia = await chamarChatGPT(promptNumerologia);
+    let numerologia = await chamarChatGPT(promptNumerologia);
+    numerologia = limparTexto(numerologia);
 
     // ========== 2. MAPA ASTRAL ==========
     const promptMapaAstral = `Você é um astrólogo experiente. Gere uma interpretação astrológica para:
@@ -188,9 +231,10 @@ Crie uma leitura astrológica incluindo:
 - Ciclos astrológicos atuais
 - Conselhos astrológicos personalizados
 
-Seja místico e revelador. Responda em português brasileiro.`;
+Seja místico e revelador. Responda em português brasileiro. NÃO adicione assinatura ou crédito ao final.`;
 
-    const mapaAstral = await chamarChatGPT(promptMapaAstral);
+    let mapaAstral = await chamarChatGPT(promptMapaAstral);
+    mapaAstral = limparTexto(mapaAstral);
 
     // ========== 3. LIMPEZA ESPIRITUAL ==========
     const promptLimpeza = `Você é um curador espiritual e praticante de magia branca. Gere um ritual de limpeza espiritual para:
@@ -208,9 +252,10 @@ Crie um guia de limpeza espiritual incluindo:
 - Conexão com guias espirituais
 - Próximos passos para evolução espiritual
 
-Seja profundo, sábio e transformador. Responda em português brasileiro.`;
+Seja profundo, sábio e transformador. Responda em português brasileiro. NÃO adicione assinatura ou crédito ao final.`;
 
-    const limpezaEspiritual = await chamarChatGPT(promptLimpeza);
+    let limpezaEspiritual = await chamarChatGPT(promptLimpeza);
+    limpezaEspiritual = limparTexto(limpezaEspiritual);
 
     // ========== GERA HTML ==========
     const html = `
@@ -317,6 +362,17 @@ Seja profundo, sábio e transformador. Responda em português brasileiro.`;
       border-bottom: none;
     }
 
+    .section-image {
+      width: 100%;
+      max-width: 600px;
+      height: 300px;
+      object-fit: cover;
+      border-radius: 10px;
+      margin: 20px auto;
+      display: block;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    }
+
     .section-header {
       display: flex;
       align-items: center;
@@ -345,6 +401,44 @@ Seja profundo, sábio e transformador. Responda em português brasileiro.`;
     .section-content p {
       margin-bottom: 18px;
       text-align: justify;
+    }
+
+    .numeros-loteria {
+      background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+      color: white;
+      padding: 25px;
+      border-radius: 10px;
+      text-align: center;
+      margin: 25px 0;
+      box-shadow: 0 4px 15px rgba(118, 75, 162, 0.3);
+    }
+
+    .numeros-loteria h3 {
+      font-size: 1.3em;
+      margin-bottom: 15px;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+    }
+
+    .numeros-display {
+      display: flex;
+      justify-content: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .numero {
+      background: white;
+      color: #764ba2;
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: bold;
+      font-size: 1.2em;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
     }
 
     .divider {
@@ -432,12 +526,22 @@ Seja profundo, sábio e transformador. Responda em português brasileiro.`;
         <div class="section-icon">🔢</div>
         <h2 class="section-title">Numerologia Espiritual</h2>
       </div>
+      <img src="https://images.unsplash.com/photo-1635070041078-e363dbe005cb?w=600&h=300&fit=crop" alt="Numerologia" class="section-image">
       <div class="section-content">
         ${numerologia
           .split('\n')
           .filter((line: string) => line.trim())
           .map((line: string) => `<p>${line}</p>`)
           .join('')}
+      </div>
+
+      <!-- Números para Loteria -->
+      <div class="numeros-loteria">
+        <h3>🎰 Números para Loteria (Numerologia Kaballah)</h3>
+        <p style="font-size: 0.9em; margin-bottom: 15px; opacity: 0.9;">Seus números pessoais baseados em numerologia Kaballah:</p>
+        <div class="numeros-display">
+          ${numerosLoteria.map(num => `<div class="numero">${num}</div>`).join('')}
+        </div>
       </div>
     </div>
 
@@ -449,6 +553,7 @@ Seja profundo, sábio e transformador. Responda em português brasileiro.`;
         <div class="section-icon">🌙</div>
         <h2 class="section-title">Mapa Astral</h2>
       </div>
+      <img src="https://images.unsplash.com/photo-1419242902214-272b3f66ee7a?w=600&h=300&fit=crop" alt="Constelações" class="section-image">
       <div class="section-content">
         ${mapaAstral
           .split('\n')
@@ -466,6 +571,7 @@ Seja profundo, sábio e transformador. Responda em português brasileiro.`;
         <div class="section-icon">🕯️</div>
         <h2 class="section-title">Limpeza Espiritual</h2>
       </div>
+      <img src="https://images.unsplash.com/photo-1604881991720-f91add269bed?w=600&h=300&fit=crop" alt="Ritual" class="section-image">
       <div class="section-content">
         ${limpezaEspiritual
           .split('\n')
@@ -506,6 +612,7 @@ Seja profundo, sábio e transformador. Responda em português brasileiro.`;
         numerologia,
         mapaAstral,
         limpezaEspiritual,
+        numerosLoteria,
       },
     });
   } catch (error) {
