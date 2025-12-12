@@ -59,6 +59,10 @@ export default function Home() {
 
   // ESTÁGIO 2: Gerar Combo
   const handleGerarCombo = async () => {
+    // 🔍 DEBUG
+    console.log('📅 Data recebida:', dataNascimento);
+    console.log('📧 Email:', userData?.email);
+    console.log('👤 Nome:', userData?.nome);
     if (!dataNascimento) {
       setError('Por favor, digite sua data de nascimento');
       return;
