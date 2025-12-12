@@ -42,9 +42,11 @@ export default function Home() {
       }
 
       // Email validado!
+      console.log('🔍 Dados retornados:', data.usuario);
+
       setUserData({
-        nome: data.usuario.customer_name || data.usuario.customer_first_name || 'Cliente',
-        email: data.usuario.customer_email,
+      nome: data.usuario.customer_name || data.usuario.customer_first_name || 'Cliente',
+      email: data.usuario.customer_email || email, // ← ADICIONA ISSO!
       });
 
       setStage('data');
