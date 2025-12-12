@@ -83,9 +83,9 @@ export default function EntregaContent() {
           setError('Erro ao gerar combo');
           setLoading(false);
         }
-    }
+      }
 
-          const downloadKey = `combo_downloaded_${email}`;
+      const downloadKey = `combo_downloaded_${email}`;
           const wasDownloaded = localStorage.getItem(downloadKey);
           setDownloaded(!!wasDownloaded);
         }
