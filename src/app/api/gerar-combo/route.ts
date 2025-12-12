@@ -212,12 +212,6 @@ Seja profundo, sábio e transformador. Responda em português brasileiro.`;
 
     const limpezaEspiritual = await chamarChatGPT(promptLimpeza);
 
-    // Marca no Supabase que foi gerado
-    await supabase
-      .from('compras')
-      .update({ combo_gerado: true })
-      .eq('customer_email', email.toLowerCase().trim());
-
     // ========== GERA HTML ==========
     const html = `
 <!DOCTYPE html>
@@ -494,6 +488,14 @@ Seja profundo, sábio e transformador. Responda em português brasileiro.`;
 </body>
 </html>
     `;
+
+    // ✅ AGORA marca como gerado (APÓS gerar HTML com sucesso)
+    await supabase
+      .from('compras')
+      .update({ combo_gerado: true })
+      .eq('customer_email', email.toLowerCase().trim());
+
+    console.log('✅ Combo gerado e marcado com sucesso!');
 
     return NextResponse.json({
       success: true,
