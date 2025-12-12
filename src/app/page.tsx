@@ -45,7 +45,7 @@ export default function Home() {
       console.log('🔍 Dados retornados:', data.usuario);
 
       setUserData({
-      nome: data.usuario.customer_name || data.usuario.customer_first_name || 'Cliente',
+      nome: data.usuario.nome || 'Cliente',  // ← MUD ISSO!
       email: data.usuario.customer_email || email, // ← ADICIONA ISSO!
       });
 
