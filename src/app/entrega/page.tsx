@@ -93,7 +93,7 @@ export default function EntregaPage() {
             });
             setClientData(prev => ({
               ...prev!,
-              signoZodiacal: data.analises.signoZodiacal,
+              signoZodiacal: data.analises?.signoZodiacal,
             }));
           }
           
