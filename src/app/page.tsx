@@ -79,31 +79,14 @@ export default function Home() {
     setError(null);
 
     try {
-      // Chama o endpoint gerar-combo
-      const response = await fetch('/api/gerar-combo', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          nome: userData.nome,
-          data: dataNascimento,
-          email: userData.email,
-        }),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok || !data.success) {
-        setError(data.error || 'Erro ao gerar seu combo. Tente novamente.');
-        setLoading(false);
-        return;
-      }
-
-      // Sucesso! Redireciona pra entrega
+      setLoading(false);
+      
+      // Redireciona direto pra /entrega (gera lá, não aqui!)
       router.push(
         `/entrega?email=${encodeURIComponent(userData.email)}&data=${encodeURIComponent(dataNascimento)}&nome=${encodeURIComponent(userData.nome)}`
       );
     } catch (err) {
-      setError('Erro ao gerar seu combo. Tente novamente.');
+      setError('Erro ao redirecionar. Tente novamente.');
       console.error(err);
       setLoading(false);
     }
