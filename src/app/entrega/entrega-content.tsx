@@ -65,6 +65,7 @@ export default function EntregaContent() {
         console.log('✅ Response recebida:', data);
         console.log('📄 HTML recebido?', !!data.html);
         console.log('✅ Success?', data.success);
+
         if (data.success && data.html) {
           console.log('🎉 HTML recebido! Tamanho:', data.html.length);
           setComboHtml(data.html);
@@ -75,20 +76,16 @@ export default function EntregaContent() {
               signoZodiacal: data.analises?.signoZodiacal,
             }));
           }
-          
-          setLoading(false);
-          return;
         } else {
           console.log('❌ Erro: HTML vazio ou success false');
           setError('Erro ao gerar combo');
-          setLoading(false);
         }
-      }
 
-      const downloadKey = `combo_downloaded_${email}`;
-          const wasDownloaded = localStorage.getItem(downloadKey);
-          setDownloaded(!!wasDownloaded);
-        }
+        // Verifica se já foi baixado
+        const downloadKey = `combo_downloaded_${email}`;
+        const wasDownloaded = localStorage.getItem(downloadKey);
+        setDownloaded(!!wasDownloaded);
+
       } catch (err) {
         setError('Erro ao carregar seu combo. Tente novamente.');
         console.error(err);
@@ -117,9 +114,6 @@ export default function EntregaContent() {
     localStorage.setItem(downloadKey, new Date().toISOString());
     setDownloaded(true);
   };
-
-  // [RESTO DO CÓDIGO IGUAL AO QUE VOCÊ TEM]
-  // Só copio o JSX da renderização...
 
   if (loading) {
     return (
