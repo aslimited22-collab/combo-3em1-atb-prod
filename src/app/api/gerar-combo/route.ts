@@ -587,7 +587,6 @@ Seja profundo, sábio e transformador. Responda em português brasileiro. NÃO a
       <p style="font-size: 1.1em; font-weight: bold; margin-bottom: 15px;">Que sua jornada seja iluminada pelas energias do Universo</p>
       <p>🌙 ATB Tarot - Autoconhecimento, Transformação, Bênção 🌙</p>
       <p style="margin-top: 20px; font-size: 0.85em; opacity: 0.8;">
-        Gerado em: ${new Date().toLocaleDateString('pt-BR')} às ${new Date().toLocaleTimeString('pt-BR')}
       </p>
     </div>
   </div>
