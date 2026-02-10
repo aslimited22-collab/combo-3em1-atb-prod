@@ -1,102 +1,23 @@
 'use client';
 
-import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Loader2, Mail, Calendar, Sparkles, Moon, Sun, Star, Heart, Eye } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { Moon, Sun, Star, Sparkles } from 'lucide-react';
 import { Card } from '@/components/ui/card';
+import { FLAGS, SUPPORTED_LANGS, type Lang } from '@/lib/translations';
 
-export default function Home() {
+const FLAG_SVGS: Record<Lang, string> = {
+  pt: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 504"><rect width="720" height="504" fill="#009c3b"/><polygon points="360,42 668,252 360,462 52,252" fill="#ffdf00"/><circle cx="360" cy="252" r="112" fill="#002776"/><path d="M232,252 Q360,186 488,252 Q360,210 232,252" fill="#fff"/></svg>`,
+  en: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 7410 3900"><rect width="7410" height="3900" fill="#b22234"/><path d="M0,450H7410m0,600H0m0,600H7410m0,600H0m0,600H7410m0,600H0" stroke="#fff" stroke-width="300"/><rect width="2964" height="2100" fill="#3c3b6e"/><g fill="#fff"><g id="s18"><g id="s9"><g id="s5"><g id="s4"><path id="s" d="M247,90 317.534230,307.082039 132.873218,172.917961H361.126782L176.465770,307.082039z"/><use href="#s" y="420"/><use href="#s" y="840"/><use href="#s" y="1260"/></g><use href="#s" y="1680"/></g><use href="#s4" x="247" y="210"/></g><use href="#s9" x="494"/></g><use href="#s18" x="988"/><use href="#s9" x="1976"/></g></svg>`,
+  es: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 750 500"><rect width="750" height="500" fill="#c60b1e"/><rect width="750" height="250" y="125" fill="#ffc400"/></svg>`,
+  de: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 5 3"><rect width="5" height="3" y="0" fill="#000"/><rect width="5" height="2" y="1" fill="#D00"/><rect width="5" height="1" y="2" fill="#FFCE00"/></svg>`,
+  it: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 3 2"><rect width="1" height="2" fill="#009246"/><rect width="1" height="2" x="1" fill="#fff"/><rect width="1" height="2" x="2" fill="#ce2b37"/></svg>`,
+};
+
+export default function LanguageSelectPage() {
   const router = useRouter();
-  const [stage, setStage] = useState<'email' | 'data'>('email');
-  const [email, setEmail] = useState('');
-  const [dataNascimento, setDataNascimento] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [userData, setUserData] = useState<{ nome: string; email: string } | null>(null);
 
-  // ESTÁGIO 1: Validar Email
-  const handleValidarEmail = async () => {
-    if (!email) {
-      setError('Por favor, digite seu email');
-      return;
-    }
-
-    setLoading(true);
-    setError(null);
-
-    try {
-      // Chama endpoint pra validar email
-      const response = await fetch('/api/validar-acesso', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: email.toLowerCase().trim() }),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok || !data.acesso) {
-        setError('Email não encontrado ou sem acesso. Verifique se você fez a compra.');
-        setLoading(false);
-        return;
-      }
-
-      // Email validado!
-      console.log('🔍 Dados retornados:', data.usuario);
-
-      setUserData({
-      nome: data.usuario.nome || 'Cliente',  // ← MUD ISSO!
-      email: data.usuario.customer_email || email, // ← ADICIONA ISSO!
-      });
-
-      setStage('data');
-      setError(null);
-    } catch (err) {
-      setError('Erro ao validar email. Tente novamente.');
-      console.error(err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // ESTÁGIO 2: Gerar Combo
-  const handleGerarCombo = async () => {
-    // 🔍 DEBUG
-    console.log('📅 Data recebida:', dataNascimento);
-    console.log('📧 Email:', userData?.email);
-    console.log('👤 Nome:', userData?.nome);
-    if (!dataNascimento) {
-      setError('Por favor, digite sua data de nascimento');
-      return;
-    }
-
-    if (!userData) {
-      setError('Erro ao recuperar dados. Tente novamente.');
-      return;
-    }
-
-    setLoading(true);
-    setError(null);
-
-    try {
-      setLoading(false);
-      
-      // Redireciona direto pra /entrega (gera lá, não aqui!)
-      router.push(
-        `/entrega?email=${encodeURIComponent(userData.email)}&data=${encodeURIComponent(dataNascimento)}&nome=${encodeURIComponent(userData.nome)}`
-      );
-    } catch (err) {
-      setError('Erro ao redirecionar. Tente novamente.');
-      console.error(err);
-      setLoading(false);
-    }
-  };
-
-  const handleVoltar = () => {
-    setStage('email');
-    setDataNascimento('');
-    setUserData(null);
-    setError(null);
+  const handleSelectLang = (lang: Lang) => {
+    router.push(`/acesso?lang=${lang}`);
   };
 
   return (
@@ -107,6 +28,8 @@ export default function Home() {
         <div className="absolute top-40 right-20 w-1 h-1 bg-purple-400 rounded-full animate-ping"></div>
         <div className="absolute bottom-32 left-1/4 w-1.5 h-1.5 bg-[#d4af37] rounded-full animate-pulse"></div>
         <div className="absolute top-1/3 right-1/3 w-1 h-1 bg-purple-300 rounded-full animate-ping"></div>
+        <div className="absolute bottom-20 right-10 w-2 h-2 bg-purple-500 rounded-full animate-pulse"></div>
+        <div className="absolute top-60 left-1/2 w-1 h-1 bg-[#d4af37] rounded-full animate-ping"></div>
       </div>
 
       <div className="relative z-10 w-full max-w-2xl">
@@ -122,10 +45,10 @@ export default function Home() {
 
           <div className="space-y-2">
             <h2 className="text-3xl md:text-4xl font-bold text-white">
-              Seu Mapa Espiritual Exclusivo
+              Choose Your Language
             </h2>
             <p className="text-purple-200 text-lg">
-              ✨ Acesse seu combo personalizado 3 em 1 ✨
+              ✨ Selecione seu idioma / Select your language ✨
             </p>
           </div>
 
@@ -138,168 +61,53 @@ export default function Home() {
           </div>
         </div>
 
-        {/* Card Principal */}
+        {/* Card com Bandeiras */}
         <Card className="bg-gradient-to-br from-purple-900/60 to-[#2d1b4e]/60 backdrop-blur-xl border-2 border-[#d4af37] p-8 md:p-12 shadow-2xl">
           <div className="space-y-8">
-            {/* Título da seção */}
             <div className="text-center space-y-2">
               <div className="flex justify-center mb-4">
                 <Sparkles className="w-12 h-12 text-[#d4af37] animate-pulse" />
               </div>
-              <h3 className="text-3xl font-bold text-white">
-                {stage === 'email' ? 'Comece Aqui' : 'Complementar Dados'}
+              <h3 className="text-2xl font-bold text-white">
+                Spiritual Map / Mapa Espiritual
               </h3>
-              <p className="text-purple-200">
-                {stage === 'email'
-                  ? 'Digite o email da sua compra para acessar seu mapa espiritual'
-                  : 'Digite sua data de nascimento para gerar seu combo personalizado'}
-              </p>
             </div>
 
-            {/* ESTÁGIO 1: EMAIL */}
-            {stage === 'email' && (
-              <div className="space-y-6">
-                <div className="space-y-3">
-                  <label className="block text-white font-semibold text-lg">
-                    <Mail className="w-5 h-5 inline mr-2 text-[#d4af37]" />
-                    Seu Email
-                  </label>
-                  <input
-                    type="email"
-                    placeholder="seu-email@exemplo.com"
-                    value={email}
-                    onChange={(e) => {
-                      setEmail(e.target.value);
-                      setError(null);
-                    }}
-                    disabled={loading}
-                    className="w-full px-6 py-4 bg-black/40 border-2 border-[#d4af37]/50 rounded-2xl text-white placeholder-purple-400 focus:border-[#d4af37] focus:outline-none transition-all disabled:opacity-50"
-                  />
-                </div>
-
-                {error && (
-                  <div className="bg-red-900/30 border-l-4 border-red-500 p-4 rounded">
-                    <p className="text-red-300">⚠️ {error}</p>
-                  </div>
-                )}
-
-                <Button
-                  onClick={handleValidarEmail}
-                  disabled={loading || !email}
-                  size="lg"
-                  className="w-full bg-gradient-to-r from-[#d4af37] via-purple-600 to-[#d4af37] hover:from-[#e5c158] hover:via-purple-700 hover:to-[#e5c158] text-white font-bold text-lg py-6 rounded-full shadow-2xl transition-all duration-300 hover:scale-105 border-2 border-white/20"
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {SUPPORTED_LANGS.map((lang) => (
+                <button
+                  key={lang}
+                  onClick={() => handleSelectLang(lang)}
+                  className="group flex items-center gap-4 p-5 bg-black/40 border-2 border-[#d4af37]/30 rounded-2xl hover:border-[#d4af37] hover:bg-[#d4af37]/10 transition-all duration-300 hover:scale-105 cursor-pointer"
                 >
-                  {loading ? (
-                    <>
-                      <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                      Validando...
-                    </>
-                  ) : (
-                    <>
-                      <Mail className="w-5 h-5 mr-2" />
-                      Validar Email
-                    </>
-                  )}
-                </Button>
-
-                <p className="text-center text-purple-300 text-sm">
-                  Você receberá este link no email após sua compra
-                </p>
-              </div>
-            )}
-
-            {/* ESTÁGIO 2: DATA DE NASCIMENTO */}
-            {stage === 'data' && userData && (
-              <div className="space-y-6">
-                {/* Dados do usuário */}
-                <div className="bg-black/40 p-6 rounded-2xl border border-[#d4af37]/30">
-                  <div className="flex items-center gap-3 mb-4">
-                    <Heart className="w-6 h-6 text-[#d4af37]" />
-                    <div>
-                      <p className="text-purple-300 text-sm">Bem-vindo,</p>
-                      <p className="text-white font-bold text-lg">{userData.nome}</p>
-                    </div>
-                  </div>
-                  <p className="text-purple-200 text-sm">{userData.email}</p>
-                </div>
-
-                {/* Input de Data */}
-                <div className="space-y-3">
-                  <label className="block text-white font-semibold text-lg">
-                    <Calendar className="w-5 h-5 inline mr-2 text-[#d4af37]" />
-                    Data de Nascimento
-                  </label>
-                  <input
-                    type="date"
-                    value={dataNascimento}
-                    onChange={(e) => {
-                      setDataNascimento(e.target.value);
-                      setError(null);
-                    }}
-                    disabled={loading}
-                    className="w-full px-6 py-4 bg-black/40 border-2 border-[#d4af37]/50 rounded-2xl text-white focus:border-[#d4af37] focus:outline-none transition-all disabled:opacity-50"
+                  <div
+                    className="w-14 h-10 rounded-lg overflow-hidden border border-white/20 shadow-lg flex-shrink-0"
+                    dangerouslySetInnerHTML={{ __html: FLAG_SVGS[lang] }}
                   />
-                  <p className="text-purple-300 text-sm">Formato: DD/MM/AAAA</p>
-                </div>
-
-                {error && (
-                  <div className="bg-red-900/30 border-l-4 border-red-500 p-4 rounded">
-                    <p className="text-red-300">⚠️ {error}</p>
+                  <div className="text-left">
+                    <p className="text-white font-bold text-lg group-hover:text-[#d4af37] transition-colors">
+                      {FLAGS[lang].label}
+                    </p>
+                    <p className="text-purple-300 text-sm">
+                      {FLAGS[lang].country}
+                    </p>
                   </div>
-                )}
-
-                {/* Botões */}
-                <div className="grid grid-cols-2 gap-4">
-                  <Button
-                    onClick={handleVoltar}
-                    disabled={loading}
-                    size="lg"
-                    variant="outline"
-                    className="border-[#d4af37] text-[#d4af37] hover:bg-[#d4af37]/10"
-                  >
-                    Voltar
-                  </Button>
-                  <Button
-                    onClick={handleGerarCombo}
-                    disabled={loading || !dataNascimento}
-                    size="lg"
-                    className="bg-gradient-to-r from-[#d4af37] via-purple-600 to-[#d4af37] hover:from-[#e5c158] hover:via-purple-700 hover:to-[#e5c158] text-white font-bold py-6 rounded-full shadow-2xl transition-all duration-300 hover:scale-105 border-2 border-white/20"
-                  >
-                    {loading ? (
-                      <>
-                        <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                        Gerando...
-                      </>
-                    ) : (
-                      <>
-                        <Sparkles className="w-5 h-5 mr-2" />
-                        Gerar Combo
-                      </>
-                    )}
-                  </Button>
-                </div>
-
-                <div className="flex items-start gap-3 bg-purple-900/30 p-4 rounded-2xl border border-[#d4af37]/20">
-                  <Eye className="w-5 h-5 text-[#d4af37] flex-shrink-0 mt-1" />
-                  <p className="text-purple-200 text-sm">
-                    Seu combo será gerado com Numerologia, Mapa Astral e Limpeza Espiritual personalizados
-                  </p>
-                </div>
-              </div>
-            )}
+                </button>
+              ))}
+            </div>
           </div>
         </Card>
 
         {/* Footer */}
         <div className="text-center mt-12 space-y-4">
           <p className="text-purple-300 italic text-lg">
-            "O universo conspira a favor daqueles que buscam a luz interior"
+            &quot;The universe conspires in favor of those who seek the inner light&quot;
           </p>
           <p className="text-[#d4af37]">
-            ✨ ATB Tarot - Guiando almas desde 2010 ✨
+            ✨ ATB Tarot - Guiding souls since 2010 ✨
           </p>
           <p className="text-gray-500 text-sm">
-            © 2024 ATB Tarot - Todos os direitos reservados
+            © 2024 ATB Tarot - All rights reserved
           </p>
         </div>
       </div>

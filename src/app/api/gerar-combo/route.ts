@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { t, isValidLang, type Lang } from '@/lib/translations';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -10,6 +11,7 @@ interface GerarComboRequest {
   nome: string;
   data: string;
   email: string;
+  lang?: string;
 }
 
 function calcularIdade(dataNascimento: string): number {
@@ -25,7 +27,7 @@ function calcularIdade(dataNascimento: string): number {
 
 function extrairNumeros(data: string, nome: string) {
   const [ano, mes, dia] = data.split('-').map(Number);
-  
+
   const nomeNumeros = nome
     .toUpperCase()
     .split('')
@@ -74,30 +76,26 @@ function obterSignoZodiacal(dia: number, mes: number): string {
   return 'Desconhecido';
 }
 
-// Gera números para loteria usando numerologia Kaballah
 function gerarNumerosLoteria(nome: string, data: string): number[] {
   const [ano, mes, dia] = data.split('-').map(Number);
-  
-  // Seed baseado no nome e data
+
   let seed = 0;
   for (let i = 0; i < nome.length; i++) {
     seed += nome.charCodeAt(i);
   }
   seed += dia + mes + ano;
-  
-  // Função pseudo-aleatória com seed
+
   const random = (min: number, max: number) => {
     seed = (seed * 9301 + 49297) % 233280;
     return Math.floor((seed / 233280) * (max - min + 1)) + min;
   };
-  
+
   const numeros = new Set<number>();
-  
-  // Gera 5 números entre 1 e 60 (padrão de numerologia Kaballah)
+
   while (numeros.size < 5) {
     numeros.add(random(1, 60));
   }
-  
+
   return Array.from(numeros).sort((a, b) => a - b);
 }
 
@@ -126,33 +124,107 @@ async function chamarChatGPT(prompt: string): Promise<string> {
   return data.choices[0].message.content;
 }
 
-// Remove assinaturas do ChatGPT
 function limparTexto(texto: string): string {
-  // Remove padrões comuns de assinatura
   return texto
     .replace(/\[.*?Especialista.*?\]/g, '')
     .replace(/\[.*?Mestre.*?\]/g, '')
     .replace(/\[.*?Tarólogo.*?\]/g, '')
     .replace(/\[.*?Astrólogo.*?\]/g, '')
     .replace(/\[.*?Curador.*?\]/g, '')
+    .replace(/\[.*?Specialist.*?\]/g, '')
+    .replace(/\[.*?Master.*?\]/g, '')
+    .replace(/\[.*?Healer.*?\]/g, '')
+    .replace(/\[.*?Experte.*?\]/g, '')
+    .replace(/\[.*?Esperto.*?\]/g, '')
+    .replace(/\[.*?Especialista.*?\]/g, '')
     .replace(/Atenciosamente,?.*$/gm, '')
     .replace(/Com bênçãos,?.*$/gm, '')
+    .replace(/Sincerely,?.*$/gm, '')
+    .replace(/Best regards,?.*$/gm, '')
+    .replace(/Mit freundlichen Grüßen,?.*$/gm, '')
+    .replace(/Cordialmente,?.*$/gm, '')
+    .replace(/Con cariño,?.*$/gm, '')
     .trim();
+}
+
+function getPromptNumerologia(lang: Lang, nome: string, data: string, numeroDestino: number, numeroExpressao: number, numeroSoul: number, idade: number): string {
+  const gptLang = t(lang, 'gpt.language');
+
+  return `You are a master of spiritual numerology. Generate a deep and mystical reading about:
+
+Name: ${nome}
+Date of Birth: ${data}
+Destiny Number: ${numeroDestino}
+Expression Number: ${numeroExpressao}
+Soul Number: ${numeroSoul}
+Age: ${idade} years
+
+Create an esoteric analysis including:
+- Deep meaning of each number
+- Life mission indicated by the numbers
+- Numerological challenges and opportunities
+- Personal cycles
+- Message from the Universe through numbers
+
+Be poetic, inspiring and mysterious. Respond entirely in ${gptLang}. Do NOT add any signature or credit at the end.`;
+}
+
+function getPromptMapaAstral(lang: Lang, nome: string, data: string, signoZodiacal: string): string {
+  const gptLang = t(lang, 'gpt.language');
+  const signoTraduzido = t(lang, `signo.${signoZodiacal}`);
+
+  return `You are an experienced astrologer. Generate an astrological interpretation for:
+
+Name: ${nome}
+Date of Birth: ${data}
+Sun Sign: ${signoTraduzido}
+
+Create an astrological reading including:
+- Sun sign characteristics
+- Planetary influences (Sun, Moon, Ascendant)
+- Astrological spiritual calling
+- Relationships and compatibilities
+- Current astrological cycles
+- Personalized astrological advice
+
+Be mystical and revealing. Respond entirely in ${gptLang}. Do NOT add any signature or credit at the end.`;
+}
+
+function getPromptLimpeza(lang: Lang, nome: string, signoZodiacal: string, idade: number): string {
+  const gptLang = t(lang, 'gpt.language');
+  const signoTraduzido = t(lang, `signo.${signoZodiacal}`);
+
+  return `You are a spiritual healer and white magic practitioner. Generate a spiritual cleansing ritual for:
+
+Name: ${nome}
+Sign: ${signoTraduzido}
+Age: ${idade} years
+
+Create a spiritual cleansing guide including:
+- Personal energy diagnosis
+- Identified spiritual blockages
+- Recommended cleansing ritual (bath, incense, crystals)
+- Powerful affirmations and mantras
+- Energy protection
+- Connection with spiritual guides
+- Next steps for spiritual evolution
+
+Be deep, wise and transformative. Respond entirely in ${gptLang}. Do NOT add any signature or credit at the end.`;
 }
 
 export async function POST(request: NextRequest) {
   try {
     const body = (await request.json()) as GerarComboRequest;
     const { nome, data, email } = body;
+    const lang: Lang = isValidLang(body.lang || null) ? (body.lang as Lang) : 'pt';
 
     if (!nome || !data || !email) {
       return NextResponse.json(
-        { error: 'Nome, data e email são obrigatórios' },
+        { error: t(lang, 'api.error.required') },
         { status: 400 }
       );
     }
 
-    // Valida se o usuário existe
     const { data: userData, error: userError } = await supabase
       .from('compras')
       .select('*')
@@ -162,22 +234,22 @@ export async function POST(request: NextRequest) {
 
     if (userError || !userData) {
       return NextResponse.json(
-        { error: 'Email não encontrado ou sem acesso' },
+        { error: t(lang, 'api.error.notfound') },
         { status: 401 }
       );
     }
 
     if (userData.combo_gerado) {
       return NextResponse.json(
-        { error: 'Você já gerou seu combo. Limite de uma geração por conta.' },
+        { error: t(lang, 'api.error.limit') },
         { status: 403 }
       );
     }
 
-    // Calcula informações
     const idade = calcularIdade(data);
     const { dia, mes, ano, nomeNumeros } = extrairNumeros(data, nome);
     const signoZodiacal = obterSignoZodiacal(dia, mes);
+    const signoTraduzido = t(lang, `signo.${signoZodiacal}`);
     const numerosLoteria = gerarNumerosLoteria(nome, data);
 
     const numeroDestino = reduzirNumero(dia + mes + ano);
@@ -192,79 +264,30 @@ export async function POST(request: NextRequest) {
         .reduce((a, b) => a + b, 0)
     );
 
-    console.log('🔮 Gerando combo para:', { nome, data, signoZodiacal });
+    console.log('🔮 Gerando combo para:', { nome, data, signoZodiacal, lang });
 
     // ========== 1. NUMEROLOGIA ==========
-    const promptNumerologia = `Você é um mestre em numerologia espiritual. Gere uma leitura profunda e mística sobre:
-
-Nome: ${nome}
-Data de Nascimento: ${data}
-Número do Destino: ${numeroDestino}
-Número da Expressão: ${numeroExpressao}
-Número da Alma: ${numeroSoul}
-Idade: ${idade} anos
-
-Crie uma análise esotérica incluindo:
-- Significado profundo de cada número
-- Missão de vida indicada pelos números
-- Desafios e oportunidades numerológicas
-- Ciclos pessoais
-- Mensagem do Universo através dos números
-
-Seja poético, inspirador e misterioso. Responda em português brasileiro. NÃO adicione assinatura ou crédito ao final.`;
-
-    let numerologia = await chamarChatGPT(promptNumerologia);
+    let numerologia = await chamarChatGPT(getPromptNumerologia(lang, nome, data, numeroDestino, numeroExpressao, numeroSoul, idade));
     numerologia = limparTexto(numerologia);
 
     // ========== 2. MAPA ASTRAL ==========
-    const promptMapaAstral = `Você é um astrólogo experiente. Gere uma interpretação astrológica para:
-
-Nome: ${nome}
-Data de Nascimento: ${data}
-Signo Solar: ${signoZodiacal}
-
-Crie uma leitura astrológica incluindo:
-- Características do signo solar
-- Influência dos planetas (Sol, Lua, Ascendente)
-- Chamado espiritual astrológico
-- Relacionamentos e compatibilidades
-- Ciclos astrológicos atuais
-- Conselhos astrológicos personalizados
-
-Seja místico e revelador. Responda em português brasileiro. NÃO adicione assinatura ou crédito ao final.`;
-
-    let mapaAstral = await chamarChatGPT(promptMapaAstral);
+    let mapaAstral = await chamarChatGPT(getPromptMapaAstral(lang, nome, data, signoZodiacal));
     mapaAstral = limparTexto(mapaAstral);
 
     // ========== 3. LIMPEZA ESPIRITUAL ==========
-    const promptLimpeza = `Você é um curador espiritual e praticante de magia branca. Gere um ritual de limpeza espiritual para:
-
-Nome: ${nome}
-Signo: ${signoZodiacal}
-Idade: ${idade} anos
-
-Crie um guia de limpeza espiritual incluindo:
-- Diagnóstico energético pessoal
-- Bloqueios espirituais identificados
-- Ritual de limpeza recomendado (banho, incenso, cristais)
-- Afirmações e mantras poderosos
-- Proteção energética
-- Conexão com guias espirituais
-- Próximos passos para evolução espiritual
-
-Seja profundo, sábio e transformador. Responda em português brasileiro. NÃO adicione assinatura ou crédito ao final.`;
-
-    let limpezaEspiritual = await chamarChatGPT(promptLimpeza);
+    let limpezaEspiritual = await chamarChatGPT(getPromptLimpeza(lang, nome, signoZodiacal, idade));
     limpezaEspiritual = limparTexto(limpezaEspiritual);
 
     // ========== GERA HTML ==========
+    const htmlLang = lang === 'pt' ? 'pt-BR' : lang === 'en' ? 'en-US' : lang === 'es' ? 'es-ES' : lang === 'de' ? 'de-DE' : 'it-IT';
+
     const html = `
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="${htmlLang}">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Seu Combo Espiritual 3 em 1 - ATB Tarot</title>
+  <title>${t(lang, 'html.title')} - ATB Tarot</title>
   <style>
     * {
       margin: 0;
@@ -487,35 +510,35 @@ Seja profundo, sábio e transformador. Responda em português brasileiro. NÃO a
   <div class="container">
     <!-- HEADER -->
     <div class="header">
-      <h1>✨ Seu Combo Espiritual 3 em 1 ✨</h1>
-      <p>Numerologia • Mapa Astral • Limpeza Espiritual</p>
-      <p style="font-size: 0.9em; margin-top: 15px;">Uma jornada de autoconhecimento e transformação espiritual</p>
+      <h1>✨ ${t(lang, 'html.title')} ✨</h1>
+      <p>${t(lang, 'html.subtitle')}</p>
+      <p style="font-size: 0.9em; margin-top: 15px;">${t(lang, 'html.journey')}</p>
     </div>
 
     <!-- INFO CARDS -->
     <div class="info-grid">
       <div class="info-card">
-        <h4>Nome</h4>
+        <h4>${t(lang, 'html.name')}</h4>
         <div class="value">${nome}</div>
       </div>
       <div class="info-card">
-        <h4>Signo</h4>
-        <div class="value">${signoZodiacal}</div>
+        <h4>${t(lang, 'html.sign')}</h4>
+        <div class="value">${signoTraduzido}</div>
       </div>
       <div class="info-card">
-        <h4>Destino</h4>
+        <h4>${t(lang, 'html.destiny')}</h4>
         <div class="value">${numeroDestino}</div>
       </div>
       <div class="info-card">
-        <h4>Expressão</h4>
+        <h4>${t(lang, 'html.expression')}</h4>
         <div class="value">${numeroExpressao}</div>
       </div>
       <div class="info-card">
-        <h4>Alma</h4>
+        <h4>${t(lang, 'html.soul')}</h4>
         <div class="value">${numeroSoul}</div>
       </div>
       <div class="info-card">
-        <h4>Idade</h4>
+        <h4>${t(lang, 'html.age')}</h4>
         <div class="value">${idade}</div>
       </div>
     </div>
@@ -524,7 +547,7 @@ Seja profundo, sábio e transformador. Responda em português brasileiro. NÃO a
     <div class="section">
       <div class="section-header">
         <div class="section-icon">🔢</div>
-        <h2 class="section-title">Numerologia Espiritual</h2>
+        <h2 class="section-title">${t(lang, 'html.numerology')}</h2>
       </div>
       <img src="https://images.unsplash.com/photo-1635070041078-e363dbe005cb?w=600&h=300&fit=crop" alt="Numerologia" class="section-image">
       <div class="section-content">
@@ -537,8 +560,8 @@ Seja profundo, sábio e transformador. Responda em português brasileiro. NÃO a
 
       <!-- Números para Loteria -->
       <div class="numeros-loteria">
-        <h3>🎰 Números para Loteria (Numerologia Kaballah)</h3>
-        <p style="font-size: 0.9em; margin-bottom: 15px; opacity: 0.9;">Seus números pessoais baseados em numerologia Kaballah:</p>
+        <h3>🎰 ${t(lang, 'html.lottery')}</h3>
+        <p style="font-size: 0.9em; margin-bottom: 15px; opacity: 0.9;">${t(lang, 'html.lottery.desc')}</p>
         <div class="numeros-display">
           ${numerosLoteria.map(num => `<div class="numero">${num}</div>`).join('')}
         </div>
@@ -551,9 +574,9 @@ Seja profundo, sábio e transformador. Responda em português brasileiro. NÃO a
     <div class="section">
       <div class="section-header">
         <div class="section-icon">🌙</div>
-        <h2 class="section-title">Mapa Astral</h2>
+        <h2 class="section-title">${t(lang, 'html.astral')}</h2>
       </div>
-      <img src="https://images.unsplash.com/photo-1419242902214-272b3f66ee7a?w=600&h=300&fit=crop" alt="Constelações" class="section-image">
+      <img src="https://images.unsplash.com/photo-1419242902214-272b3f66ee7a?w=600&h=300&fit=crop" alt="Astral" class="section-image">
       <div class="section-content">
         ${mapaAstral
           .split('\n')
@@ -569,7 +592,7 @@ Seja profundo, sábio e transformador. Responda em português brasileiro. NÃO a
     <div class="section">
       <div class="section-header">
         <div class="section-icon">🕯️</div>
-        <h2 class="section-title">Limpeza Espiritual</h2>
+        <h2 class="section-title">${t(lang, 'html.cleansing')}</h2>
       </div>
       <img src="https://images.unsplash.com/photo-1604881991720-f91add269bed?w=600&h=300&fit=crop" alt="Ritual" class="section-image">
       <div class="section-content">
@@ -584,8 +607,8 @@ Seja profundo, sábio e transformador. Responda em português brasileiro. NÃO a
     <!-- FOOTER -->
     <div class="footer">
       <div class="mystical-ornament">🔮 ✨ 🔮</div>
-      <p style="font-size: 1.1em; font-weight: bold; margin-bottom: 15px;">Que sua jornada seja iluminada pelas energias do Universo</p>
-      <p>🌙 ATB Tarot - Autoconhecimento, Transformação, Bênção 🌙</p>
+      <p style="font-size: 1.1em; font-weight: bold; margin-bottom: 15px;">${t(lang, 'html.footer.message')}</p>
+      <p>🌙 ${t(lang, 'html.footer.brand')} 🌙</p>
       <p style="margin-top: 20px; font-size: 0.85em; opacity: 0.8;">
       </p>
     </div>
@@ -594,7 +617,6 @@ Seja profundo, sábio e transformador. Responda em português brasileiro. NÃO a
 </html>
     `;
 
-    // ✅ AGORA marca como gerado (APÓS gerar HTML com sucesso)
     await supabase
       .from('compras')
       .update({ combo_gerado: true })
@@ -607,7 +629,7 @@ Seja profundo, sábio e transformador. Responda em português brasileiro. NÃO a
       html,
       analises: {
         nome,
-        signoZodiacal,
+        signoZodiacal: signoTraduzido,
         numerologia,
         mapaAstral,
         limpezaEspiritual,
