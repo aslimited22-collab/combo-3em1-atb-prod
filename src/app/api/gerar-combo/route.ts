@@ -45,35 +45,19 @@ function reduzirNumero(num: number): number {
 }
 
 function obterSignoZodiacal(dia: number, mes: number): string {
-  const signos = [
-    { nome: 'Capricórnio', data: [21, 1, 19] },
-    { nome: 'Aquário', data: [20, 2, 18] },
-    { nome: 'Peixes', data: [19, 3, 20] },
-    { nome: 'Áries', data: [21, 4, 19] },
-    { nome: 'Touro', data: [20, 5, 20] },
-    { nome: 'Gêmeos', data: [21, 6, 20] },
-    { nome: 'Câncer', data: [21, 7, 22] },
-    { nome: 'Leão', data: [23, 8, 22] },
-    { nome: 'Virgem', data: [23, 9, 22] },
-    { nome: 'Libra', data: [23, 10, 22] },
-    { nome: 'Escorpião', data: [23, 11, 21] },
-    { nome: 'Sagitário', data: [22, 12, 21] },
-  ];
-
-  for (let signo of signos) {
-    if (mes === signo.data[1]) {
-      if ((signo.data[1] === signo.data[2] && dia >= signo.data[0]) ||
-          (signo.data[1] !== signo.data[2] && dia <= signo.data[2])) {
-        return signo.nome;
-      }
-    } else if (mes === signo.data[2]) {
-      if (dia <= signo.data[2]) {
-        return signo.nome;
-      }
-    }
-  }
-
-  return 'Desconhecido';
+  if ((mes === 3 && dia >= 21) || (mes === 4 && dia <= 19)) return 'Áries';
+  if ((mes === 4 && dia >= 20) || (mes === 5 && dia <= 20)) return 'Touro';
+  if ((mes === 5 && dia >= 21) || (mes === 6 && dia <= 20)) return 'Gêmeos';
+  if ((mes === 6 && dia >= 21) || (mes === 7 && dia <= 22)) return 'Câncer';
+  if ((mes === 7 && dia >= 23) || (mes === 8 && dia <= 22)) return 'Leão';
+  if ((mes === 8 && dia >= 23) || (mes === 9 && dia <= 22)) return 'Virgem';
+  if ((mes === 9 && dia >= 23) || (mes === 10 && dia <= 22)) return 'Libra';
+  if ((mes === 10 && dia >= 23) || (mes === 11 && dia <= 21)) return 'Escorpião';
+  if ((mes === 11 && dia >= 22) || (mes === 12 && dia <= 21)) return 'Sagitário';
+  if ((mes === 12 && dia >= 22) || (mes === 1 && dia <= 19)) return 'Capricórnio';
+  if ((mes === 1 && dia >= 20) || (mes === 2 && dia <= 18)) return 'Aquário';
+  if ((mes === 2 && dia >= 19) || (mes === 3 && dia <= 20)) return 'Peixes';
+  return 'Áries';
 }
 
 function gerarNumerosLoteria(nome: string, data: string): number[] {
