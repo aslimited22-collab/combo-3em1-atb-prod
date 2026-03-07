@@ -97,16 +97,20 @@ function ProdutoContent() {
         <div className="absolute inset-0 bg-gradient-to-br from-black via-red-950/20 to-black"></div>
 
         <div className="relative z-10 p-4">
-          <div className="max-w-7xl mx-auto mb-4 flex flex-wrap gap-4 justify-between items-center bg-gray-900 p-4 rounded-lg border-2 border-green-500">
-            <h2 className="text-white text-xl font-bold">{t(lang, 'produto.result.title')}</h2>
-            <div className="flex gap-3">
-              <button
-                onClick={handleBaixarCombo}
-                className="px-6 py-3 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white font-bold rounded-lg transition-all"
-              >
-                {t(lang, 'produto.result.download')}
-              </button>
-            </div>
+          {/* Banner de salvar — no topo */}
+          <div className="max-w-7xl mx-auto mb-4 bg-green-900/40 border-2 border-green-500 rounded-lg p-5 text-center">
+            <p className="text-green-200 text-base font-bold">{t(lang, 'produto.result.save.banner')}</p>
+          </div>
+
+          <div className="max-w-7xl mx-auto mb-4 flex flex-col gap-3 bg-gray-900 p-5 rounded-lg border-2 border-green-500">
+            <h2 className="text-white text-xl font-bold text-center">{t(lang, 'produto.result.title')}</h2>
+            <button
+              onClick={handleBaixarCombo}
+              className="w-full py-4 px-6 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white font-black text-lg rounded-lg transition-all"
+            >
+              {t(lang, 'produto.result.download')}
+            </button>
+            <p className="text-gray-400 text-xs text-center">{t(lang, 'produto.result.save.instruction')}</p>
           </div>
 
           <div className="max-w-7xl mx-auto mb-4 bg-yellow-600/20 border-2 border-yellow-500 rounded-lg p-4 text-center">
@@ -120,6 +124,17 @@ function ProdutoContent() {
               dangerouslySetInnerHTML={{ __html: resultado }}
               className="w-full"
             />
+          </div>
+
+          {/* Botão de salvar repetido abaixo do conteúdo */}
+          <div className="max-w-7xl mx-auto mt-6 flex flex-col gap-3 bg-gray-900 p-5 rounded-lg border-2 border-green-500">
+            <button
+              onClick={handleBaixarCombo}
+              className="w-full py-4 px-6 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white font-black text-lg rounded-lg transition-all"
+            >
+              {t(lang, 'produto.result.download')}
+            </button>
+            <p className="text-gray-400 text-xs text-center">{t(lang, 'produto.result.save.instruction')}</p>
           </div>
         </div>
       </div>
@@ -169,6 +184,7 @@ function ProdutoContent() {
                       className="w-full px-4 py-4 bg-black/50 border-2 border-purple-500/50 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all"
                       placeholder={t(lang, 'produto.verify.placeholder')}
                     />
+                    <p className="text-gray-400 text-xs mt-2 italic">{t(lang, 'produto.verify.hint')}</p>
                   </div>
 
                   {etapa === 'NEGADO' && error && (
@@ -202,8 +218,8 @@ function ProdutoContent() {
                   </p>
                 </div>
 
-                 <div className="bg-yellow-600/20 border-2 border-yellow-500 rounded-lg p-4 mb-6 text-center">
-                    <p className="text-yellow-200 text-sm font-semibold">
+                 <div className="bg-yellow-600/20 border-2 border-yellow-500 rounded-lg p-4 mb-4 text-center">
+                    <p className="text-yellow-200 text-sm font-bold">
                       {t(lang, 'produto.access.warning')}
                     </p>
                   </div>
@@ -239,6 +255,10 @@ function ProdutoContent() {
                     </div>
                   )}
 
+                  <div className="bg-orange-900/30 border border-orange-500/50 rounded-lg p-3 text-center">
+                    <p className="text-orange-200 text-xs font-semibold">{t(lang, 'produto.access.dontclose')}</p>
+                  </div>
+
                   <button
                     type="submit"
                     disabled={loading}
@@ -246,6 +266,12 @@ function ProdutoContent() {
                   >
                     {loading ? t(lang, 'produto.access.generating') : t(lang, 'produto.access.generate')}
                   </button>
+
+                  {loading && (
+                    <p className="text-center text-gray-300 text-sm animate-pulse">
+                      {t(lang, 'produto.access.wait')}
+                    </p>
+                  )}
                 </form>
                </>
             )}

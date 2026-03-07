@@ -231,6 +231,7 @@ export default function AcessoContent() {
                     className="w-full px-6 py-4 bg-black/40 border-2 border-[#d4af37]/50 rounded-2xl text-white focus:border-[#d4af37] focus:outline-none transition-all disabled:opacity-50"
                   />
                   <p className="text-purple-300 text-sm">{t(lang, 'home.date.hint')}</p>
+                  <p className="text-purple-400 text-xs italic">{t(lang, 'home.date.example')}</p>
                 </div>
 
                 {error && (
@@ -238,6 +239,12 @@ export default function AcessoContent() {
                     <p className="text-red-300">{error}</p>
                   </div>
                 )}
+
+                <div className="bg-yellow-900/30 border-l-4 border-yellow-500 p-4 rounded-xl">
+                  <p className="text-yellow-200 text-sm font-semibold">
+                    {t(lang, 'home.warning.dontclose')}
+                  </p>
+                </div>
 
                 <div className="grid grid-cols-2 gap-4">
                   <Button
