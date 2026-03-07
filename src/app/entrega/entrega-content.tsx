@@ -2,9 +2,10 @@
 
 import { useState, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { Loader2, Download, Sparkles, Moon, Sun, Star, Heart, Eye, Crown, Flame } from 'lucide-react';
+import { Loader2, Download, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import { t, isValidLang, type Lang } from '@/lib/translations';
 
 interface ComboResponse {
   success: boolean;
@@ -26,6 +27,9 @@ interface ClientData {
 
 export default function EntregaContent() {
   const searchParams = useSearchParams();
+  const langParam = searchParams.get('lang');
+  const lang: Lang = isValidLang(langParam) ? langParam : 'pt';
+
   const [loading, setLoading] = useState(true);
   const [downloaded, setDownloaded] = useState(false);
   const [clientData, setClientData] = useState<ClientData | null>(null);
@@ -40,7 +44,7 @@ export default function EntregaContent() {
         const nome = searchParams.get('nome');
 
         if (!email || !dataNascimento || !nome) {
-          setError('Parâmetros inválidos. Verifique sua URL.');
+          setError(t(lang, 'entrega.error.params'));
           setLoading(false);
           return;
         }
@@ -51,25 +55,21 @@ export default function EntregaContent() {
         const response = await fetch('/api/gerar-combo', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ nome, data: dataNascimento, email }),
+          body: JSON.stringify({ nome, data: dataNascimento, email, lang }),
         });
 
         if (!response.ok) {
           const errorData = await response.json();
-          setError(errorData.error || 'Erro ao gerar combo');
+          setError(errorData.error || t(lang, 'entrega.error.generic'));
           setLoading(false);
           return;
         }
 
         const data: ComboResponse = await response.json();
-        console.log('✅ Response recebida:', data);
-        console.log('📄 HTML recebido?', !!data.html);
-        console.log('✅ Success?', data.success);
 
         if (data.success && data.html) {
-          console.log('🎉 HTML recebido! Tamanho:', data.html.length);
           setComboHtml(data.html);
-          
+
           if (data.analises) {
             setClientData(prev => ({
               ...prev!,
@@ -77,17 +77,15 @@ export default function EntregaContent() {
             }));
           }
         } else {
-          console.log('❌ Erro: HTML vazio ou success false');
-          setError('Erro ao gerar combo');
+          setError(t(lang, 'entrega.error.generic'));
         }
 
-        // Verifica se já foi baixado
         const downloadKey = `combo_downloaded_${email}`;
         const wasDownloaded = localStorage.getItem(downloadKey);
         setDownloaded(!!wasDownloaded);
 
       } catch (err) {
-        setError('Erro ao carregar seu combo. Tente novamente.');
+        setError(t(lang, 'entrega.error.load'));
         console.error(err);
       } finally {
         setLoading(false);
@@ -95,7 +93,7 @@ export default function EntregaContent() {
     };
 
     init();
-  }, [searchParams]);
+  }, [searchParams, lang]);
 
   const handleDownload = () => {
     if (!clientData || !comboHtml) return;
@@ -130,14 +128,14 @@ export default function EntregaContent() {
 
           <div className="space-y-4">
             <h2 className="text-4xl md:text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-[#d4af37] via-purple-400 to-[#d4af37] animate-pulse">
-              ATB está canalizando suas energias...
+              {t(lang, 'entrega.loading.title')}
             </h2>
           </div>
 
           <div className="flex flex-col items-center gap-4 mt-8">
             <div className="flex items-center justify-center gap-3 text-purple-200 bg-black/40 backdrop-blur-xl px-8 py-4 rounded-full border border-[#d4af37]/30">
               <Loader2 className="w-6 h-6 animate-spin text-[#d4af37]" />
-              <span className="text-lg">Canalizando as mensagens do universo...</span>
+              <span className="text-lg">{t(lang, 'entrega.loading.subtitle')}</span>
             </div>
           </div>
         </div>
@@ -149,7 +147,7 @@ export default function EntregaContent() {
     return (
       <div className="min-h-screen bg-gradient-to-br from-[#0B0B0B] via-[#1a0933] to-[#2d1b4e] flex items-center justify-center p-4">
         <Card className="max-w-2xl w-full bg-black/40 backdrop-blur-xl border-[#d4af37] p-12 text-center space-y-6">
-          <h2 className="text-4xl font-bold text-white">Erro ao carregar</h2>
+          <h2 className="text-4xl font-bold text-white">{t(lang, 'entrega.error.title')}</h2>
           <p className="text-purple-300 text-lg">{error}</p>
         </Card>
       </div>
@@ -160,8 +158,8 @@ export default function EntregaContent() {
     return (
       <div className="min-h-screen bg-gradient-to-br from-[#0B0B0B] via-[#1a0933] to-[#2d1b4e] flex items-center justify-center p-4">
         <Card className="max-w-2xl w-full bg-black/40 backdrop-blur-xl border-[#d4af37] p-12 text-center space-y-6">
-          <h2 className="text-4xl font-bold text-white">Produto já entregue</h2>
-          <p className="text-purple-300 text-lg">Você já realizou o download do seu mapa espiritual.</p>
+          <h2 className="text-4xl font-bold text-white">{t(lang, 'entrega.downloaded.title')}</h2>
+          <p className="text-purple-300 text-lg">{t(lang, 'entrega.downloaded.description')}</p>
         </Card>
       </div>
     );
@@ -177,7 +175,7 @@ export default function EntregaContent() {
                 <iframe
                   srcDoc={comboHtml}
                   className="w-full h-screen border-0"
-                  title="Seu Mapa Espiritual"
+                  title={t(lang, 'entrega.iframe.title')}
                 />
               </div>
             </div>
@@ -191,7 +189,7 @@ export default function EntregaContent() {
                 </div>
 
                 <h3 className="text-3xl md:text-4xl font-bold text-white">
-                  Baixe Seu Mapa Espiritual Completo
+                  {t(lang, 'entrega.download.title')}
                 </h3>
 
                 <div className="flex flex-col items-center gap-4 py-6">
@@ -202,7 +200,7 @@ export default function EntregaContent() {
                     className="bg-gradient-to-r from-[#d4af37] via-purple-600 to-[#d4af37] hover:from-[#e5c158] hover:via-purple-700 hover:to-[#e5c158] text-white font-bold text-xl px-16 py-8 rounded-full shadow-2xl transition-all duration-300 hover:scale-105 border-2 border-white/20"
                   >
                     <Download className="w-7 h-7 mr-3" />
-                    Baixar Meu Mapa Espiritual Exclusivo
+                    {t(lang, 'entrega.download.button')}
                   </Button>
                 </div>
               </div>
